@@ -1,0 +1,34 @@
+name: Sync Upstream
+
+on:
+  push:
+    paths:
+      - '.github/workflows/sync-upstream.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Merge upstream danmu_api
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge upstream main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/huangxd-/danmu_api.git || true
+          git fetch upstream main
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "Already up to date with upstream"
+            exit 0
+          fi
+          git merge upstream/main --no-edit -m "chore: sync upstream danmu_api $(date -u +%Y-%m-%d)"
+          git push origin HEAD:main
